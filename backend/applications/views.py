@@ -39,3 +39,28 @@ class ApplicationView(APIView):
         serializer = ApplicationSerializer(application)
         return Response(serializer.data, status=201)
 
+class ApplicationStatusView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if request.user.role != 'admin':
+            return Response({'message': 'Only admin can update status'}, status=403)
+
+        try:
+            application = Application.objects.get(id=pk)
+        except Application.DoesNotExist:
+            return Response({'message': 'Application not found'}, status=404)
+
+        status_value = request.data.get('status')
+
+        valid_statuses = ['applied', 'shortlisted', 'rejected', 'selected']
+        if status_value not in valid_statuses:
+            return Response({'message': 'Invalid status'}, status=400)
+
+        application.status = status_value
+        application.save()
+
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data)
+
