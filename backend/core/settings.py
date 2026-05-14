@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users',
     'jobs',
     'applications',
+    'announcements',
     'rest_framework_simplejwt'
 ]
 
