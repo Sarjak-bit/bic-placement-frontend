@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer,RegisterSerializer,StudentProfileSerializer
 from .models import User, StudentProfile
+from jobs.models import Job
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -55,3 +56,30 @@ class StudentProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+
+from applications.models import Application
+
+class AnalyticsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'admin':
+            return Response({'message': 'Only admin can view analytics'}, status=403)
+
+        total_students = User.objects.filter(role='student').count()
+        total_jobs = Job.objects.filter(is_active=True).count()
+        total_applications = Application.objects.count()
+        shortlisted = Application.objects.filter(status='shortlisted').count()
+        selected = Application.objects.filter(status='selected').count()
+        rejected = Application.objects.filter(status='rejected').count()
+
+        data = {
+            'total_students': total_students,
+            'total_jobs': total_jobs,
+            'total_applications': total_applications,
+            'shortlisted': shortlisted,
+            'selected': selected,
+            'rejected': rejected,
+        }
+        return Response(data)
