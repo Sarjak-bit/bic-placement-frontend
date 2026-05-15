@@ -83,3 +83,65 @@ class AnalyticsView(APIView):
             'rejected': rejected,
         }
         return Response(data)
+
+class ResumeUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            profile = StudentProfile.objects.get(user=request.user)
+        except StudentProfile.DoesNotExist:
+            return Response({'message': 'Please create your profile first'}, status=404)
+
+        if 'resume' not in request.FILES:
+            return Response({'message': 'No file uploaded'}, status=400)
+
+        file = request.FILES['resume']
+
+        if not file.name.endswith('.pdf'):
+            return Response({'message': 'Only PDF files are allowed'}, status=400)
+
+        profile.resume = file
+        profile.save()
+
+        return Response({'message': 'Resume uploaded successfully', 'resume': profile.resume.url})
+
+from .utils import extract_resume_data
+
+class ResumeUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if 'resume' not in request.FILES:
+            return Response({'message': 'No file uploaded'}, status=400)
+
+        file = request.FILES['resume']
+
+        if not file.name.endswith('.pdf'):
+            return Response({'message': 'Only PDF files are allowed'}, status=400)
+
+        # Extract data from resume
+        extracted_data = extract_resume_data(file)
+
+        # Save file temporarily
+        profile, created = StudentProfile.objects.get_or_create(
+            user=request.user,
+            defaults={
+                'faculty': '',
+                'semester': 1,
+                'cgpa': 0.0,
+                'student_id': request.user.username,
+            }
+        )
+        profile.resume = file
+        profile.save()
+
+        # Return extracted data for student to confirm
+        return Response({
+            'message': 'Resume uploaded! Please confirm or correct your details.',
+            'resume': profile.resume.url,
+            'extracted_data': extracted_data,
+            'instructions': 'Send a PATCH request to /api/users/student-profile/ with confirmed data'
+        })
