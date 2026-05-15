@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .serializers import JobSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Job
@@ -24,8 +25,12 @@ class JobListView(APIView):
                 )
             except StudentProfile.DoesNotExist:
                 return Response({'message':'Please complete your profile first'}, status=400)
-        serializer = JobSerializer(jobs, many=True)
-        return Response(serializer.data)
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result_page = paginator.paginate_queryset(jobs, request)
+        serializer = JobSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
     
     def post(self,request):
         if request.user.role!='admin':
@@ -37,4 +42,43 @@ class JobListView(APIView):
         return Response(serializer.errors, status=400)
 
 
+class JobDetailView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, pk):
+        try:
+            job = Job.objects.get(id=pk, is_active=True)
+        except Job.DoesNotExist:
+            return Response({'message': 'Job not found'}, status=404)
+        
+        serializer = JobSerializer(job)
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        if request.user.role != 'admin':
+            return Response({'message': 'Only admin can update jobs'}, status=403)
+        
+        try:
+            job = Job.objects.get(id=pk)
+        except Job.DoesNotExist:
+            return Response({'message': 'Job not found'}, status=404)
+        
+        serializer = JobSerializer(job, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        if request.user.role != 'admin':
+            return Response({'message': 'Only admin can delete jobs'}, status=403)
+        
+        try:
+            job = Job.objects.get(id=pk)
+        except Job.DoesNotExist:
+            return Response({'message': 'Job not found'}, status=404)
+        
+        job.is_active = False
+        job.save()
+        return Response({'message': 'Job deactivated successfully'})

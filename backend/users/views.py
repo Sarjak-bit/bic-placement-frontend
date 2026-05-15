@@ -145,3 +145,19 @@ class ResumeUploadView(APIView):
             'extracted_data': extracted_data,
             'instructions': 'Send a PATCH request to /api/users/student-profile/ with confirmed data'
         })
+
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+
+class LogoutView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'message': 'Logged out successfully'})
+        except TokenError:
+            return Response({'message': 'Invalid token'}, status=400)
