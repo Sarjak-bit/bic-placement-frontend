@@ -5,19 +5,55 @@ import StudentDashboard from "./pages/StudentDashboard";
 import StudentProfileSetup from "./pages/StudentProfileSetup";
 import AdminDashboard from "./pages/AdminDashboard";
 import PostJob from "./pages/PostJob";
+import MyApplications from "./pages/MyApplications";
+import ProtectedRoute from "./components/ProtectedRoute";
+import EditProfile from "./pages/EditProfile"
 
 function App() {
   return (
+   
+
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/student/profile-setup" element={<StudentProfileSetup />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/post-job" element={<PostJob />} />
+        <Route path="/student/edit-profile" element={
+          <ProtectedRoute allowedRole="student">
+            <EditProfile />
+          </ProtectedRoute>
+        } />
+
+        {/* Student only routes */}
+        <Route path="/student/dashboard" element={
+          <ProtectedRoute allowedRole="student">
+            <StudentDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/student/profile-setup" element={
+          <ProtectedRoute allowedRole="student">
+            <StudentProfileSetup />
+          </ProtectedRoute>
+        } />
+        <Route path="/student/applications" element={
+          <ProtectedRoute allowedRole="student">
+            <MyApplications />
+          </ProtectedRoute>
+        } />
+
+        {/* Admin only routes */}
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute allowedRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/post-job" element={
+          <ProtectedRoute allowedRole="admin">
+            <PostJob />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
+
   );
 }
 
