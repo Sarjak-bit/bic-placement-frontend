@@ -3,7 +3,6 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://localhost:8000/",
 });
-
 // Automatically refresh token if expired
 api.interceptors.response.use(
   (response) => response,

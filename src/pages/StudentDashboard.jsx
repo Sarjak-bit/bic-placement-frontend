@@ -19,7 +19,7 @@ function StudentDashboard() {
     api.get("api/jobs/", {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
-      setJobs(res.data);
+      setJobs(res.data.results);
     }).catch(err => {
       if (err.response?.data?.message === "Please complete your profile first") {
         navigate("/student/profile-setup");
@@ -111,8 +111,18 @@ function StudentDashboard() {
           >
             👤 Edit Profile
           </button>
-
-          {/* Profile info at bottom */}
+          <button
+            onClick={() => navigate("/student/announcements")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
+          >
+            📢 Announcements
+          </button>
+          <button
+            onClick={() => navigate("/student/resume-upload")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
+          >
+            📄 Upload Resume
+          </button>
           {profile && (
             <div className="mt-auto px-2 pt-8 border-t border-blue-700">
               <p className="text-white text-sm font-semibold">{profile.username}</p>

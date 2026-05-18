@@ -13,7 +13,7 @@ function AdminDashboard() {
   useEffect(() => {
     api.get("api/jobs/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then(res => setJobs(res.data));
+    }).then(res => setJobs(res.data.results));  // ← fixed
     fetchApplications();
   }, []);
 
@@ -114,7 +114,6 @@ function AdminDashboard() {
         {/* Sidebar */}
         <div className="w-64 shadow-lg flex flex-col py-8 px-4 gap-2" style={{ backgroundColor: "#1a2f6e" }}>
           <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-4 px-2">Admin Portal</p>
-
           <button
             onClick={() => navigate("/admin/dashboard")}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-white font-semibold text-sm"
@@ -127,6 +126,18 @@ function AdminDashboard() {
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
           >
             ➕ Post New Job
+          </button>
+          <button
+            onClick={() => navigate("/admin/announcements")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
+          >
+            📢 Post Announcement
+          </button>
+          <button
+            onClick={() => navigate("/admin/analytics")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
+          >
+            📊 Analytics
           </button>
         </div>
 
