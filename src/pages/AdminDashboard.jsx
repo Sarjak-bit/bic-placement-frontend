@@ -39,6 +39,25 @@ function AdminDashboard() {
     logout();
     navigate("/");
   };
+  const handleExport = async (status) => {
+  try {
+    const params = status !== "all" ? { status } : {};
+    const res = await api.get("api/applications/export/", {
+      headers: { Authorization: `Bearer ${token}` },
+      params,
+      responseType: "blob",
+    });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `applications_${status}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    alert("Failed to export");
+  }
+};
 
   const applied = applications.filter(app => app.status === "applied");
   const shortlisted = applications.filter(app => app.status === "shortlisted");
@@ -199,8 +218,22 @@ function AdminDashboard() {
             </div>
           )}
 
-          {/* Applications Sections */}
-          <h2 className="text-xl font-bold mb-4" style={{ color: "#1a2f6e" }}>Applications</h2>
+         {/* Applications Sections */}
+<div className="flex items-center justify-between mb-4">
+  <h2 className="text-xl font-bold" style={{ color: "#1a2f6e" }}>Applications</h2>
+  <div className="flex gap-2">
+    {["all", "shortlisted", "selected", "rejected"].map(status => (
+      <button
+        key={status}
+        onClick={() => handleExport(status)}
+        className="px-3 py-2 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition"
+        style={{ backgroundColor: "#1a2f6e" }}
+      >
+        ⬇ Export {status}
+      </button>
+    ))}
+  </div>
+</div>
 
           {/* Applied */}
           <div className="mb-6">

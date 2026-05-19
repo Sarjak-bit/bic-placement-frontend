@@ -8,6 +8,8 @@ function StudentDashboard() {
   const [profile, setProfile] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [appliedJobIds, setAppliedJobIds] = useState([]);
+  const [search, setSearch] = useState("");
+  const [jobType, setJobType] = useState("");
   const { token, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -16,16 +18,6 @@ function StudentDashboard() {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => setProfile(res.data));
 
-    api.get("api/jobs/", {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => {
-      setJobs(res.data.results);
-    }).catch(err => {
-      if (err.response?.data?.message === "Please complete your profile first") {
-        navigate("/student/profile-setup");
-      }
-    });
-
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
@@ -33,6 +25,22 @@ function StudentDashboard() {
       setAppliedJobIds(ids);
     });
   }, []);
+
+  useEffect(() => {
+    api.get("api/jobs/", {
+      headers: { Authorization: `Bearer ${token}` },
+      params: {
+        search: search || undefined,
+        job_type: jobType || undefined,
+      }
+    }).then(res => {
+      setJobs(res.data.results);
+    }).catch(err => {
+      if (err.response?.data?.message === "Please complete your profile first") {
+        navigate("/student/profile-setup");
+      }
+    });
+  }, [search, jobType]);
 
   const handleApply = async (jobId) => {
     try {
@@ -91,7 +99,6 @@ function StudentDashboard() {
         {/* Sidebar */}
         <div className="w-64 shadow-lg flex flex-col py-8 px-4 gap-2" style={{ backgroundColor: "#1a2f6e" }}>
           <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-4 px-2">Student Portal</p>
-
           <button
             onClick={() => navigate("/student/dashboard")}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-white font-semibold text-sm"
@@ -134,8 +141,33 @@ function StudentDashboard() {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          <h1 className="text-2xl font-bold mb-2" style={{ color: "#1a2f6e" }}>Available Jobs</h1>
-          <p className="text-gray-500 text-sm mb-6">Jobs you are eligible to apply for based on your profile</p>
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold mb-1" style={{ color: "#1a2f6e" }}>Available Jobs</h1>
+              <p className="text-gray-500 text-sm">Jobs you are eligible to apply for based on your profile</p>
+            </div>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="flex gap-3 mb-6">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="🔍 Search by job title or company..."
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none bg-white shadow-sm"
+            />
+            <select
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              className="px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none bg-white shadow-sm"
+            >
+              <option value="">All Types</option>
+              <option value="internship">Internship</option>
+              <option value="fulltime">Full Time</option>
+              <option value="parttime">Part Time</option>
+            </select>
+          </div>
 
           {jobs.length === 0 ? (
             <div className="bg-white rounded-xl p-12 text-center shadow">
