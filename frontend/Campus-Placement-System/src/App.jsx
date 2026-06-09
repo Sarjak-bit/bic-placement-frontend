@@ -8,6 +8,11 @@ import PostJob from "./pages/PostJob";
 import MyApplications from "./pages/MyApplications";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditProfile from "./pages/EditProfile"
+import Announcements from "./pages/Announcements";
+import PostAnnouncement from "./pages/PostAnnouncement";
+import Analytics from "./pages/Analytics";
+import ResumeUpload from "./pages/ResumeUpload";
+
 
 function App() {
   return (
@@ -51,7 +56,28 @@ function App() {
             <PostJob />
           </ProtectedRoute>
         } />
+         <Route path="/student/announcements" element={
+  <ProtectedRoute allowedRole="student">
+    <Announcements />
+  </ProtectedRoute>
+} />
+<Route path="/admin/announcements" element={
+  <ProtectedRoute allowedRole="admin">
+    <PostAnnouncement />
+  </ProtectedRoute>
+} />
+<Route path="/admin/analytics" element={
+  <ProtectedRoute allowedRole="admin">
+    <Analytics />
+  </ProtectedRoute>
+} />
+<Route path="/student/resume-upload" element={
+  <ProtectedRoute allowedRole="student">
+    <ResumeUpload />
+  </ProtectedRoute>
+} />
       </Routes>
+     
     </BrowserRouter>
 
   );
