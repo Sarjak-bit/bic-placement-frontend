@@ -12,11 +12,15 @@ import Announcements from "./pages/Announcements";
 import PostAnnouncement from "./pages/PostAnnouncement";
 import Analytics from "./pages/Analytics";
 import ResumeUpload from "./pages/ResumeUpload";
+import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyProfileSetup from "./pages/CompanyProfileSetup";
+import AdminInterviews from "./pages/AdminInterviews";
+
 
 
 function App() {
   return (
-   
+
 
     <BrowserRouter>
       <Routes>
@@ -56,28 +60,47 @@ function App() {
             <PostJob />
           </ProtectedRoute>
         } />
-         <Route path="/student/announcements" element={
-  <ProtectedRoute allowedRole="student">
-    <Announcements />
-  </ProtectedRoute>
-} />
-<Route path="/admin/announcements" element={
+        <Route path="/student/announcements" element={
+          <ProtectedRoute allowedRole="student">
+            <Announcements />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/announcements" element={
+          <ProtectedRoute allowedRole="admin">
+            <PostAnnouncement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/analytics" element={
+          <ProtectedRoute allowedRole="admin">
+            <Analytics />
+          </ProtectedRoute>
+        } />
+        <Route path="/student/resume-upload" element={
+          <ProtectedRoute allowedRole="student">
+            <ResumeUpload />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/company/dashboard" element={
+          <ProtectedRoute allowedRole="company">
+            <CompanyDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/company/profile-setup" element={
+          <ProtectedRoute allowedRole="company">
+            <CompanyProfileSetup />
+          </ProtectedRoute>
+        } />
+
+        import AdminInterviews from "./pages/AdminInterviews";
+
+<Route path="/admin/interviews" element={
   <ProtectedRoute allowedRole="admin">
-    <PostAnnouncement />
-  </ProtectedRoute>
-} />
-<Route path="/admin/analytics" element={
-  <ProtectedRoute allowedRole="admin">
-    <Analytics />
-  </ProtectedRoute>
-} />
-<Route path="/student/resume-upload" element={
-  <ProtectedRoute allowedRole="student">
-    <ResumeUpload />
+    <AdminInterviews />
   </ProtectedRoute>
 } />
       </Routes>
-     
+
     </BrowserRouter>
 
   );
