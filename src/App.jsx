@@ -15,6 +15,8 @@ import ResumeUpload from "./pages/ResumeUpload";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyProfileSetup from "./pages/CompanyProfileSetup";
 import AdminInterviews from "./pages/AdminInterviews";
+import InterviewPage from "./pages/InterviewPage";
+import OfferLetters from "./pages/OfferLetters";
 
 
 
@@ -92,11 +94,20 @@ function App() {
           </ProtectedRoute>
         } />
 
-        import AdminInterviews from "./pages/AdminInterviews";
 
 <Route path="/admin/interviews" element={
   <ProtectedRoute allowedRole="admin">
     <AdminInterviews />
+  </ProtectedRoute>
+} />
+<Route path="/student/interviews" element={
+  <ProtectedRoute allowedRole="student">
+    <InterviewPage />
+  </ProtectedRoute>
+} />
+<Route path="/student/offer-letters" element={
+  <ProtectedRoute allowedRole="student">
+    <OfferLetters />
   </ProtectedRoute>
 } />
       </Routes>

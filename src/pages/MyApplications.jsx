@@ -83,6 +83,10 @@ function MyApplications() {
           >
             👤 Edit Profile
           </button>
+
+          <button onClick={() => navigate("/student/offer-letters")} className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition">
+  📜 Offer Letters
+</button>
         </div>
 
         {/* Main Content */}

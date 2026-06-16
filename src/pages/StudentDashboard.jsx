@@ -106,11 +106,17 @@ function StudentDashboard() {
           >
             🏠 Dashboard
           </button>
-          <button
+         <button
             onClick={() => navigate("/student/applications")}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
           >
             📋 My Applications
+          </button>
+          <button
+            onClick={() => navigate("/student/interviews")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
+          >
+            🎤 Interviews
           </button>
           <button
             onClick={() => navigate("/student/edit-profile")}
@@ -130,12 +136,16 @@ function StudentDashboard() {
           >
             📄 Upload Resume
           </button>
+          <button onClick={() => navigate("/student/offer-letters")} className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition">
+  📜 Offer Letters
+</button>
           {profile && (
             <div className="mt-auto px-2 pt-8 border-t border-blue-700">
               <p className="text-white text-sm font-semibold">{profile.username}</p>
               <p className="text-blue-300 text-xs">{profile.email}</p>
               <span className="mt-1 inline-block text-xs px-2 py-1 rounded-full bg-blue-800 text-blue-200 capitalize">{profile.role}</span>
             </div>
+            
           )}
         </div>
 
