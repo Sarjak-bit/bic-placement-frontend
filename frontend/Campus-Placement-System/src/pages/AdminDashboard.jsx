@@ -158,6 +158,9 @@ function AdminDashboard() {
           >
             📊 Analytics
           </button>
+          <button onClick={() => navigate("/admin/interviews")} className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition">
+  🎤 Interviews
+</button>
         </div>
 
         {/* Main Content */}

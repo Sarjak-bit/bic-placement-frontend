@@ -1,8 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/",
+  baseURL: "https://bic-placement-backend.onrender.com/api",
 });
+
 // Automatically refresh token if expired
 api.interceptors.response.use(
   (response) => response,
@@ -14,7 +15,7 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem("refresh");
 
       try {
-        const res = await axios.post("http://localhost:8000/api/users/token/refresh/", {
+        const res = await axios.post("https://bic-placement-backend.onrender.com/api/users/token/refresh/", {
           refresh,
         });
         localStorage.setItem("access", res.data.access);

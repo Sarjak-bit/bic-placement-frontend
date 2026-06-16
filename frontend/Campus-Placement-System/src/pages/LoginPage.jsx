@@ -19,11 +19,13 @@ function LoginPage() {
         headers: { Authorization: `Bearer ${response.data.access}` }
       });
       login(response.data.access, response.data.refresh, profileRes.data.role);
-      if (profileRes.data.role === "admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
+    if (profileRes.data.role === "admin") {
+  navigate("/admin/dashboard");
+} else if (profileRes.data.role === "company") {
+  navigate("/company/dashboard");
+} else {
+  navigate("/student/dashboard");
+}
     } catch (err) {
       setError("Invalid username or password");
     }
