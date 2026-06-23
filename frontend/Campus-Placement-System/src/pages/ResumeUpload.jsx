@@ -2,7 +2,7 @@ import { useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import bicLogo from "../assets/BIC_Logo.png";
+import PageHeader from "../components/PageHeader";
 
 function ResumeUpload() {
   const [file, setFile] = useState(null);
@@ -33,7 +33,7 @@ function ResumeUpload() {
         },
       });
       setResult(res.data);
-    } catch (err) {
+    } catch {
       setError("Failed to upload resume");
     } finally {
       setLoading(false);
@@ -41,152 +41,67 @@ function ResumeUpload() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f4f6fb" }}>
+    <div className="space-y-6">
+      <PageHeader
+        title="Upload Resume"
+        subtitle="Upload your PDF resume — we'll extract your details automatically"
+      />
 
-      {/* Top bar */}
-      <div className="w-full py-2 px-6 flex items-center gap-6 text-white text-sm" style={{ backgroundColor: "#1a2f6e" }}>
-        <span>📞 056-597077, 598892</span>
-        <span>✉ info@bostoncollege.edu.np</span>
-      </div>
+      <div className="mx-auto max-w-xl form-section">
+        {error && <div className="alert alert-error mb-4">{error}</div>}
 
-      {/* Header */}
-      <div className="w-full bg-white py-3 px-8 flex items-center justify-between shadow">
-        <img src={bicLogo} alt="BIC" className="h-20 object-contain" />
-        <div className="text-sm font-semibold" style={{ color: "#1a2f6e" }}>BIC Campus Placement System</div>
-      </div>
+        {!result ? (
+          <form onSubmit={handleUpload} className="space-y-5">
+            <button
+              type="button"
+              className="w-full rounded-[24px] border-2 border-dashed border-slate-200/80 bg-white/50 p-8 text-center transition hover:border-[var(--primary)] hover:bg-white/80"
+              onClick={() => document.getElementById("resume-input").click()}
+            >
+              {file ? (
+                <p className="text-sm font-semibold text-[var(--primary)]">{file.name}</p>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-500">Click to select your resume</p>
+                  <p className="mt-1 text-xs text-slate-400">PDF files only</p>
+                </>
+              )}
+              <input id="resume-input" type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
+            </button>
 
-      <div className="flex flex-1">
+            <button type="submit" disabled={loading} className="btn btn-primary w-full">
+              {loading ? "Uploading..." : "Upload Resume"}
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="alert alert-success">Resume uploaded successfully!</div>
 
-        {/* Sidebar */}
-        <div className="w-64 shadow-lg flex flex-col py-8 px-4 gap-2" style={{ backgroundColor: "#1a2f6e" }}>
-          <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-4 px-2">Student Portal</p>
-          <button
-            onClick={() => navigate("/student/dashboard")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            🏠 Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/student/applications")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            📋 My Applications
-          </button>
-          <button
-            onClick={() => navigate("/student/announcements")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            📢 Announcements
-          </button>
-          <button
-            onClick={() => navigate("/student/edit-profile")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            👤 Edit Profile
-          </button>
-          <button
-            onClick={() => navigate("/student/resume-upload")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-white font-semibold text-sm"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-          >
-            📄 Upload Resume
-          </button>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-8 flex items-start justify-center">
-          <div className="bg-white rounded-2xl shadow w-full max-w-xl p-8">
-
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-white text-2xl mb-4" style={{ backgroundColor: "#1a2f6e" }}>
-                📄
+            <div className="rounded-[24px] bg-slate-50/80 p-4">
+              <h3 className="font-bold mb-3 text-[var(--primary)]">Extracted Data</h3>
+              <div className="space-y-2 text-sm">
+                {result.extracted_data && Object.entries(result.extracted_data).map(([key, value]) => (
+                  <div key={key} className="flex justify-between gap-4">
+                    <span className="text-slate-500 capitalize">{key.replace("_", " ")}:</span>
+                    <span className="font-semibold text-slate-700">{value || "Not found"}</span>
+                  </div>
+                ))}
               </div>
-              <h2 className="text-2xl font-bold" style={{ color: "#1a2f6e" }}>Upload Resume</h2>
-              <p className="text-gray-500 text-sm mt-1">Upload your PDF resume — we'll extract your details automatically</p>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
-                {error}
-              </div>
+            {result.instructions && (
+              <p className="text-center text-xs text-slate-500">{result.instructions}</p>
             )}
 
-            {!result ? (
-              <form onSubmit={handleUpload} className="space-y-5">
-                <div
-                  className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-blue-300 transition"
-                  onClick={() => document.getElementById("resume-input").click()}
-                >
-                  <p className="text-4xl mb-3">📎</p>
-                  {file ? (
-                    <p className="text-sm font-semibold" style={{ color: "#1a2f6e" }}>{file.name}</p>
-                  ) : (
-                    <>
-                      <p className="text-gray-500 text-sm">Click to select your resume</p>
-                      <p className="text-gray-400 text-xs mt-1">PDF files only</p>
-                    </>
-                  )}
-                  <input
-                    id="resume-input"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 rounded-lg text-white font-semibold text-sm hover:opacity-90 transition"
-                  style={{ backgroundColor: "#1a2f6e", opacity: loading ? 0.7 : 1 }}
-                >
-                  {loading ? "Uploading..." : "Upload Resume"}
-                </button>
-              </form>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                  ✅ Resume uploaded successfully!
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="font-bold mb-3" style={{ color: "#1a2f6e" }}>Extracted Data</h3>
-                  <div className="space-y-2 text-sm">
-                    {result.extracted_data && Object.entries(result.extracted_data).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
-                        <span className="text-gray-500 capitalize">{key.replace("_", " ")}:</span>
-                        <span className="font-semibold text-gray-700">{value || "Not found"}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <p className="text-gray-500 text-xs text-center">{result.instructions}</p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => navigate("/student/edit-profile")}
-                    className="flex-1 py-3 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition"
-                    style={{ backgroundColor: "#1a2f6e" }}
-                  >
-                    Update Profile
-                  </button>
-                  <button
-                    onClick={() => setResult(null)}
-                    className="flex-1 py-3 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
-                  >
-                    Upload Another
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="flex gap-3">
+              <button type="button" onClick={() => navigate("/student/edit-profile")} className="btn btn-primary flex-1">
+                Update Profile
+              </button>
+              <button type="button" onClick={() => setResult(null)} className="btn btn-ghost flex-1">
+                Upload Another
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="text-center text-gray-400 text-xs py-4">
-        © 2026 Boston International College — Campus Placement System
+        )}
       </div>
     </div>
   );

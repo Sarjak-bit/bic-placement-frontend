@@ -5,7 +5,7 @@ import bicLogo from "../assets/BIC_Logo.png";
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
-    username: "",
+    full_name: "",
     email: "",
     password: "",
     role: "student",
@@ -13,6 +13,7 @@ function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -21,6 +22,10 @@ function RegisterPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
     try {
       await api.post("api/users/register/", formData);
       setSuccess("Registered successfully! Redirecting to login...");
@@ -33,130 +38,92 @@ function RegisterPage() {
       } else {
         setError("Registration failed");
       }
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, #1a2f6e 0%, #2563eb 60%, #e85d1e 100%)" }}>
+    <div className="auth-shell flex flex-col">
+      <div className="auth-bg-orb -left-32 -top-32 h-96 w-96 bg-blue-400/30" />
+      <div className="auth-bg-orb -bottom-32 -right-32 h-96 w-96 bg-orange-400/25" />
 
-      {/* Top bar */}
-      <div className="w-full py-2 px-6 flex items-center gap-6 text-white text-sm" style={{ backgroundColor: "#1a2f6e" }}>
-        <span>📞 056-597077, 598892</span>
-        <span>✉ info@bostoncollege.edu.np</span>
-      </div>
-
-      {/* Header */}
-      <div className="w-full bg-white py-3 px-8 flex items-center justify-between shadow">
-        <img src={bicLogo} alt="Boston International College" className="h-20 object-contain" />
-        <div className="text-sm font-semibold" style={{ color: "#1a2f6e" }}>
-          BIC Campus Placement System
-        </div>
-      </div>
-
-      {/* Register Card */}
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-white text-2xl font-bold mb-4" style={{ backgroundColor: "#1a2f6e" }}>
-              📝
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-10">
+        <div className="auth-card animate-fade-in-up">
+          <div className="mb-8 flex flex-col items-center gap-4 text-center">
+            <div className="rounded-3xl bg-white p-3 shadow-lg ring-1 ring-slate-200/60">
+              <img
+                src={bicLogo}
+                alt="Boston International College"
+                className="h-20 w-auto object-contain md:h-24"
+              />
             </div>
-            <h2 className="text-2xl font-bold" style={{ color: "#1a2f6e" }}>Create Account</h2>
-            <p className="text-gray-500 text-sm mt-1">Register for the placement portal</p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Join the Portal
+              </p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-900">Create Your Account</h1>
+              <p className="mt-2 text-slate-500">
+                Register for access to placements, company hiring, and analytics.
+              </p>
+            </div>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg mb-4 text-sm">
-              {success}
-            </div>
-          )}
+          {error && <div className="alert alert-error mb-4">{error}</div>}
+          {success && <div className="alert alert-success mb-4">{success}</div>}
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Username</label>
-              <input
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Enter username"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              />
+              <label className="form-label">Full Name</label>
+              <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter your full name" />
             </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Email</label>
-              <input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="form-label">Email</label>
+                <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Enter email" required />
+              </div>
+              <div>
+                <label className="form-label">Phone</label>
+                <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Password</label>
-              <input
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="form-label">Password</label>
+                <input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Enter password" required />
+              </div>
+              <div>
+                <label className="form-label">Role</label>
+                <select name="role" value={formData.role} onChange={handleChange}>
+                  <option value="student">Student</option>
+                  <option value="admin">Admin</option>
+                  <option value="company">Company</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Phone</label>
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter phone number"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Role</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              >
-                <option value="student">Student</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 rounded-lg text-white font-semibold text-sm transition hover:opacity-90"
-              style={{ backgroundColor: "#1a2f6e" }}
-            >
-              Register
+
+            <button type="submit" disabled={loading} className="btn btn-primary w-full">
+              {loading ? "Creating account..." : "Register"}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <div className="mt-8 text-center text-sm text-slate-500">
             Already have an account?{" "}
-            <span
+            <button
+              type="button"
               onClick={() => navigate("/")}
-              className="font-semibold cursor-pointer hover:underline"
-              style={{ color: "#e85d1e" }}
+              className="font-semibold text-[var(--primary)] transition hover:text-[var(--primary-light)]"
             >
               Login here
-            </span>
-          </p>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="text-center text-white text-xs py-4 opacity-70">
+      <footer className="relative z-10 py-6 text-center text-xs text-slate-400">
         © 2026 Boston International College — Campus Placement System
-      </div>
+      </footer>
     </div>
   );
 }

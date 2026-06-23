@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://bic-placement-backend.onrender.com/api",
+  baseURL: "https://bic-placement-backend.onrender.com/",
 });
 
 // Automatically refresh token if expired
@@ -21,7 +21,7 @@ api.interceptors.response.use(
         localStorage.setItem("access", res.data.access);
         originalRequest.headers["Authorization"] = `Bearer ${res.data.access}`;
         return api(originalRequest);
-      } catch (err) {
+      } catch {
         localStorage.clear();
         window.location.href = "/";
       }

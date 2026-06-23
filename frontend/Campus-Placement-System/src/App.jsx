@@ -1,13 +1,16 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentProfileSetup from "./pages/StudentProfileSetup";
 import AdminDashboard from "./pages/AdminDashboard";
 import PostJob from "./pages/PostJob";
 import MyApplications from "./pages/MyApplications";
 import ProtectedRoute from "./components/ProtectedRoute";
-import EditProfile from "./pages/EditProfile"
+import MainLayout from "./components/MainLayout";
+import EditProfile from "./pages/EditProfile";
 import Announcements from "./pages/Announcements";
 import PostAnnouncement from "./pages/PostAnnouncement";
 import Analytics from "./pages/Analytics";
@@ -17,103 +20,76 @@ import CompanyProfileSetup from "./pages/CompanyProfileSetup";
 import AdminInterviews from "./pages/AdminInterviews";
 import InterviewPage from "./pages/InterviewPage";
 import OfferLetters from "./pages/OfferLetters";
+import StudentFullProfile from "./pages/StudentFullProfile";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import CompanyPostJob from "./pages/CompanyPostJob";
+import StudentAnalytics from "./pages/StudentAnalytics";
+import PlacementHistory from "./pages/PlacementHistory";
+import CompanyAnalytics from "./pages/CompanyAnalytics";
+import AdminApplications from "./pages/AdminApplications";
+import AdminCompanyVerify from "./pages/AdminCompanyVerify";
+
+
 
 
 
 function App() {
   return (
-
-
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/student/edit-profile" element={
-          <ProtectedRoute allowedRole="student">
-            <EditProfile />
-          </ProtectedRoute>
-        } />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
 
-        {/* Student only routes */}
-        <Route path="/student/dashboard" element={
+        <Route element={
           <ProtectedRoute allowedRole="student">
-            <StudentDashboard />
+            <MainLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/student/profile-setup" element={
-          <ProtectedRoute allowedRole="student">
-            <StudentProfileSetup />
-          </ProtectedRoute>
-        } />
-        <Route path="/student/applications" element={
-          <ProtectedRoute allowedRole="student">
-            <MyApplications />
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/profile-setup" element={<StudentProfileSetup />} />
+          <Route path="/student/applications" element={<MyApplications />} />
+          <Route path="/student/announcements" element={<Announcements />} />
+          <Route path="/student/interviews" element={<InterviewPage />} />
+          <Route path="/student/offer-letters" element={<OfferLetters />} />
+          <Route path="/student/profile" element={<StudentFullProfile />} />
+          <Route path="/student/analytics" element={<StudentAnalytics />} />
+          <Route path="/student/resume-upload" element={<ResumeUpload />} />
+          <Route path="/student/placement" element={<PlacementHistory />} />
+          <Route path="/student/edit-profile" element={<EditProfile />} />
+        </Route>
 
-        {/* Admin only routes */}
-        <Route path="/admin/dashboard" element={
+        <Route element={
           <ProtectedRoute allowedRole="admin">
-            <AdminDashboard />
+            <MainLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/admin/post-job" element={
-          <ProtectedRoute allowedRole="admin">
-            <PostJob />
-          </ProtectedRoute>
-        } />
-        <Route path="/student/announcements" element={
-          <ProtectedRoute allowedRole="student">
-            <Announcements />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/announcements" element={
-          <ProtectedRoute allowedRole="admin">
-            <PostAnnouncement />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/analytics" element={
-          <ProtectedRoute allowedRole="admin">
-            <Analytics />
-          </ProtectedRoute>
-        } />
-        <Route path="/student/resume-upload" element={
-          <ProtectedRoute allowedRole="student">
-            <ResumeUpload />
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/applications" element={<AdminApplications />} />
+          <Route path="/admin/companies" element={<AdminCompanyVerify />} />
+          <Route path="/admin/post-job" element={<PostJob />} />
+          <Route path="/admin/announcements" element={<PostAnnouncement />} />
+          <Route path="/admin/interviews" element={<AdminInterviews />} />
+          <Route path="/admin/placements" element={<PlacementHistory />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        </Route>
 
-        <Route path="/company/dashboard" element={
+        <Route element={
           <ProtectedRoute allowedRole="company">
-            <CompanyDashboard />
+            <MainLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/company/profile-setup" element={
-          <ProtectedRoute allowedRole="company">
-            <CompanyProfileSetup />
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/post-job" element={<CompanyPostJob />} />
+          <Route path="/company/profile-setup" element={<CompanyProfileSetup />} />
+          <Route path="/company/analytics" element={<CompanyAnalytics />} />   
+       </Route>
 
-
-<Route path="/admin/interviews" element={
-  <ProtectedRoute allowedRole="admin">
-    <AdminInterviews />
-  </ProtectedRoute>
-} />
-<Route path="/student/interviews" element={
-  <ProtectedRoute allowedRole="student">
-    <InterviewPage />
-  </ProtectedRoute>
-} />
-<Route path="/student/offer-letters" element={
-  <ProtectedRoute allowedRole="student">
-    <OfferLetters />
-  </ProtectedRoute>
-} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
     </BrowserRouter>
-
   );
 }
 

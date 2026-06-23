@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import bicLogo from "../assets/BIC_Logo.png";
+import PageHeader from "../components/PageHeader";
 
 function EditProfile() {
-  const [formData, setFormData] = useState({
+  const [accountData, setAccountData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+  });
+  const [academicData, setAcademicData] = useState({
     faculty: "",
     semester: "",
     cgpa: "",
@@ -13,33 +18,57 @@ function EditProfile() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [saving, setSaving] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("api/users/student-profile/", {
+    api.get("api/users/profile/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then(res => {
-      setFormData({
-        faculty: res.data.faculty,
-        semester: res.data.semester,
-        cgpa: res.data.cgpa,
-        student_id: res.data.student_id,
+    }).then((res) => {
+      setAccountData({
+        full_name: res.data.full_name || "",
+        email: res.data.email || "",
+        phone: res.data.phone || "",
       });
     });
-  }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    api.get("api/users/student-profile/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      setAcademicData({
+        faculty: res.data.faculty || "",
+        semester: res.data.semester || "",
+        cgpa: res.data.cgpa || "",
+        student_id: res.data.student_id || "",
+      });
+    });
+  }, [token]);
+
+  const handleAccountChange = (e) => {
+    setAccountData({ ...accountData, [e.target.name]: e.target.value });
+  };
+
+  const handleAcademicChange = (e) => {
+    setAcademicData({ ...academicData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+    setSaving(true);
+
     try {
-      await api.patch("api/users/student-profile/", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSuccess("Profile updated successfully!");
+      await Promise.all([
+        api.patch("api/users/update-profile/", accountData, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        api.patch("api/users/student-profile/", academicData, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setSuccess("Profile updated successfully.");
       setTimeout(() => navigate("/student/dashboard"), 1500);
     } catch (err) {
       const errors = err.response?.data;
@@ -47,146 +76,89 @@ function EditProfile() {
         const messages = Object.values(errors).flat().join(", ");
         setError(messages);
       } else {
-        setError("Failed to update profile");
+        setError("Failed to update profile.");
       }
+      setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f4f6fb" }}>
+    <div className="space-y-6">
+      <PageHeader
+        title="Edit Profile"
+        subtitle="Update your account and academic information"
+      />
 
-      {/* Top bar */}
-      <div className="w-full py-2 px-6 flex items-center gap-6 text-white text-sm" style={{ backgroundColor: "#1a2f6e" }}>
-        <span>📞 056-597077, 598892</span>
-        <span>✉ info@bostoncollege.edu.np</span>
-      </div>
+      <div className="mx-auto max-w-lg form-section">
+        {error && <div className="alert alert-error mb-4">{error}</div>}
+        {success && <div className="alert alert-success mb-4">{success}</div>}
 
-      {/* Header */}
-      <div className="w-full bg-white py-3 px-8 flex items-center justify-between shadow">
-        <img src={bicLogo} alt="BIC" className="h-20 object-contain" />
-        <div className="text-sm font-semibold" style={{ color: "#1a2f6e" }}>
-          BIC Campus Placement System
-        </div>
-      </div>
-
-      <div className="flex flex-1">
-
-        {/* Sidebar */}
-        <div className="w-64 shadow-lg flex flex-col py-8 px-4 gap-2" style={{ backgroundColor: "#1a2f6e" }}>
-          <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-4 px-2">Student Portal</p>
-
-          <button
-            onClick={() => navigate("/student/dashboard")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            🏠 Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/student/applications")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-200 text-sm hover:bg-white hover:text-blue-900 transition"
-          >
-            📋 My Applications
-          </button>
-          <button
-            onClick={() => navigate("/student/edit-profile")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-white font-semibold text-sm"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-          >
-            👤 Edit Profile
-          </button>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-8 flex items-start justify-center">
-          <div className="bg-white rounded-2xl shadow w-full max-w-lg p-8">
-
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-white text-2xl mb-4" style={{ backgroundColor: "#1a2f6e" }}>
-                👤
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Account Information</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="form-label">Full Name</label>
+                <input
+                  name="full_name"
+                  value={accountData.full_name}
+                  onChange={handleAccountChange}
+                  placeholder="Enter your full name"
+                />
               </div>
-              <h2 className="text-2xl font-bold" style={{ color: "#1a2f6e" }}>Edit Profile</h2>
-              <p className="text-gray-500 text-sm mt-1">Update your academic information</p>
+              <div>
+                <label className="form-label">Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  value={accountData.email}
+                  onChange={handleAccountChange}
+                  placeholder="your.email@bic.edu.np"
+                />
+              </div>
+              <div>
+                <label className="form-label">Phone</label>
+                <input
+                  name="phone"
+                  value={accountData.phone}
+                  onChange={handleAccountChange}
+                  placeholder="98XXXXXXXX"
+                />
+              </div>
             </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg mb-4 text-sm">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Faculty</label>
-                <input
-                  name="faculty"
-                  value={formData.faculty}
-                  onChange={handleChange}
-                  placeholder="e.g. BCSIT"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Semester</label>
-                <input
-                  name="semester"
-                  type="number"
-                  value={formData.semester}
-                  onChange={handleChange}
-                  placeholder="e.g. 4"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>CGPA</label>
-                <input
-                  name="cgpa"
-                  type="number"
-                  step="0.01"
-                  value={formData.cgpa}
-                  onChange={handleChange}
-                  placeholder="e.g. 3.50"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#1a2f6e" }}>Student ID</label>
-                <input
-                  name="student_id"
-                  value={formData.student_id}
-                  onChange={handleChange}
-                  placeholder="e.g. 2470263"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none"
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => navigate("/student/dashboard")}
-                  className="flex-1 py-3 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition"
-                  style={{ backgroundColor: "#1a2f6e" }}
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      </div>
 
-      {/* Footer */}
-      <div className="text-center text-gray-400 text-xs py-4">
-        © 2026 Boston International College — Campus Placement System
+          <div>
+            <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Academic Information</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="form-label">Faculty</label>
+                <input name="faculty" value={academicData.faculty} onChange={handleAcademicChange} placeholder="e.g. BCSIT" />
+              </div>
+              <div>
+                <label className="form-label">Semester</label>
+                <input name="semester" type="number" value={academicData.semester} onChange={handleAcademicChange} placeholder="e.g. 4" />
+              </div>
+              <div>
+                <label className="form-label">CGPA</label>
+                <input name="cgpa" type="number" step="0.01" value={academicData.cgpa} onChange={handleAcademicChange} placeholder="e.g. 3.50" />
+              </div>
+              <div>
+                <label className="form-label">Student ID</label>
+                <input name="student_id" value={academicData.student_id} onChange={handleAcademicChange} placeholder="e.g. 2470263" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => navigate("/student/dashboard")} className="btn btn-ghost flex-1">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving} className="btn btn-primary flex-1">
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
