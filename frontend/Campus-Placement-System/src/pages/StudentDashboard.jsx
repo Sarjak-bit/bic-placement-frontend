@@ -16,6 +16,18 @@ function StudentDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check directly whether a StudentProfile exists for this account.
+    // A 404 here means the student never completed profile setup —
+    // redirect immediately rather than waiting for some other endpoint
+    // to fail indirectly later.
+    api.get("api/users/student-profile/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch((err) => {
+      if (err.response?.status === 404) {
+        navigate("/student/profile-setup");
+      }
+    });
+
     api.get("api/users/profile/", {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => setProfile(res.data));
@@ -23,9 +35,9 @@ function StudentDashboard() {
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
-      const ids = res.data.map(app => app.job);
-      setAppliedJobIds(ids);
-    });
+      const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
+      setAppliedJobIds(list.map(app => app.job));
+    }).catch(() => setAppliedJobIds([]));
   }, []);
 
   useEffect(() => {
@@ -56,6 +68,12 @@ function StudentDashboard() {
       case "parttime": return "bg-orange-100 text-orange-700";
       default: return "bg-gray-100 text-gray-700";
     }
+  };
+
+  const matchScoreColor = (score) => {
+    if (score >= 75) return "bg-green-100 text-green-700";
+    if (score >= 50) return "bg-orange-100 text-orange-700";
+    return "bg-gray-100 text-gray-600";
   };
 
   return (
@@ -162,12 +180,26 @@ function StudentDashboard() {
               <article key={job.id} className="interactive-card !p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-slate-900">{job.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-semibold text-slate-900">{job.title}</h3>
+                      {typeof job.match_score === "number" && (
+                        <span className={`badge ${matchScoreColor(job.match_score)}`}>
+                          {Math.round(job.match_score)}% match
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 text-sm text-slate-500">{job.company}</p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${jobTypeColor(job.job_type)}`}>
-                    {job.job_type}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${jobTypeColor(job.job_type)}`}>
+                      {job.job_type}
+                    </span>
+                    {job.is_verified ? (
+                      <span className="badge bg-green-100 text-green-700">Verified</span>
+                    ) : (
+                      <span className="badge bg-yellow-100 text-yellow-700">Not yet verified</span>
+                    )}
+                  </div>
                 </div>
                 <p className="mt-4 text-sm leading-7 text-slate-600">{job.description}</p>
                 <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">

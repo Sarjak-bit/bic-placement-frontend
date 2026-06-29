@@ -8,28 +8,45 @@ function RegisterPage() {
     full_name: "",
     email: "",
     password: "",
-    role: "student",
     phone: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [registered, setRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const STUDENT_DOMAIN = "@student.bic.edu.np";
+
+  const detectRole = (email) => {
+    return email.toLowerCase().endsWith(STUDENT_DOMAIN) ? "student" : "company";
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
+    const role = detectRole(formData.email);
+
+    // TEMPORARY WORKAROUND: kept until confirmed the backend no longer
+    // requires `username` on register. Remove this block once confirmed
+    // unnecessary.
+    const emailPrefix = formData.email.split("@")[0] || "user";
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const payload = {
+      ...formData,
+      role,
+      username: `${emailPrefix}_${randomSuffix}`,
+    };
+
     try {
-      await api.post("api/users/register/", formData);
-      setSuccess("Registered successfully! Redirecting to login...");
-      setTimeout(() => navigate("/"), 2000);
+      await api.post("api/users/register/", payload);
+      setRegistered(true);
     } catch (err) {
       const errors = err.response?.data;
       if (errors) {
@@ -61,63 +78,78 @@ function RegisterPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Join the Portal
               </p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-900">Create Your Account</h1>
+              <h1 className="mt-2 text-3xl font-bold text-slate-900">
+                {registered ? "Check Your Email" : "Create Your Account"}
+              </h1>
               <p className="mt-2 text-slate-500">
-                Register for access to placements, company hiring, and analytics.
+                {registered
+                  ? "We've sent a verification link to your email address. Please verify your account before logging in."
+                  : "Register for access to placements, company hiring, and analytics."}
               </p>
             </div>
           </div>
 
           {error && <div className="alert alert-error mb-4">{error}</div>}
-          {success && <div className="alert alert-success mb-4">{success}</div>}
 
-          <form onSubmit={handleRegister} className="space-y-5">
-            <div>
-              <label className="form-label">Full Name</label>
-              <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter your full name" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="form-label">Email</label>
-                <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Enter email" required />
+          {registered ? (
+            <div className="space-y-5">
+              <div className="alert alert-success">
+                Registration successful. Please check {formData.email} for a verification link, then log in.
               </div>
-              <div>
-                <label className="form-label">Phone</label>
-                <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" />
-              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="btn btn-primary w-full"
+              >
+                Back to Login
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div>
+                <label className="form-label">Full Name</label>
+                <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter your full name" />
+              </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="form-label">Email</label>
+                  <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Enter email" required />
+                  <p className="mt-1 text-xs text-slate-400">
+                    {formData.email
+                      ? `Will register as ${detectRole(formData.email) === "student" ? "Student" : "Company"}.`
+                      : `Use a ${STUDENT_DOMAIN} email to register as a student. Any other email registers as a company.`}
+                  </p>
+                </div>
+                <div>
+                  <label className="form-label">Phone</label>
+                  <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" />
+                </div>
+              </div>
+
               <div>
                 <label className="form-label">Password</label>
                 <input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Enter password" required />
               </div>
-              <div>
-                <label className="form-label">Role</label>
-                <select name="role" value={formData.role} onChange={handleChange}>
-                  <option value="student">Student</option>
-                  <option value="admin">Admin</option>
-                  <option value="company">Company</option>
-                </select>
-              </div>
+
+              <button type="submit" disabled={loading} className="btn btn-primary w-full">
+                {loading ? "Creating account..." : "Register"}
+              </button>
+            </form>
+          )}
+
+          {!registered && (
+            <div className="mt-8 text-center text-sm text-slate-500">
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="font-semibold text-[var(--primary)] transition hover:text-[var(--primary-light)]"
+              >
+                Login here
+              </button>
             </div>
-
-            <button type="submit" disabled={loading} className="btn btn-primary w-full">
-              {loading ? "Creating account..." : "Register"}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center text-sm text-slate-500">
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="font-semibold text-[var(--primary)] transition hover:text-[var(--primary-light)]"
-            >
-              Login here
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
