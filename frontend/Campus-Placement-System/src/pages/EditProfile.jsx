@@ -19,6 +19,7 @@ function EditProfile() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [saving, setSaving] = useState(false);
+  const [profileExists, setProfileExists] = useState(true);
   const { token } = useAuth();
   const navigate = useNavigate();
 
@@ -42,6 +43,12 @@ function EditProfile() {
         cgpa: res.data.cgpa || "",
         student_id: res.data.student_id || "",
       });
+    }).catch((err) => {
+      // No StudentProfile row exists yet for this account — the academic
+      // section below will create one with POST instead of PATCH.
+      if (err.response?.status === 404) {
+        setProfileExists(false);
+      }
     });
   }, [token]);
 
@@ -60,14 +67,21 @@ function EditProfile() {
     setSaving(true);
 
     try {
+      const academicCall = profileExists
+        ? api.patch("api/users/student-profile/", academicData, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        : api.post("api/users/student-profile/", academicData, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
       await Promise.all([
         api.patch("api/users/update-profile/", accountData, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        api.patch("api/users/student-profile/", academicData, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        academicCall,
       ]);
+      setProfileExists(true);
       setSuccess("Profile updated successfully.");
       setTimeout(() => navigate("/student/dashboard"), 1500);
     } catch (err) {
@@ -86,10 +100,15 @@ function EditProfile() {
     <div className="space-y-6">
       <PageHeader
         title="Edit Profile"
-        subtitle="Update your account and academic information"
+        subtitle={profileExists ? "Update your account and academic information" : "Complete your academic information to get started"}
       />
 
       <div className="mx-auto max-w-lg form-section">
+        {!profileExists && (
+          <div className="alert alert-error mb-4">
+            Your academic profile hasn&apos;t been set up yet. Fill in the section below to complete it.
+          </div>
+        )}
         {error && <div className="alert alert-error mb-4">{error}</div>}
         {success && <div className="alert alert-success mb-4">{success}</div>}
 

@@ -6,12 +6,13 @@ import PageHeader from "../components/PageHeader";
 function AdminCompanyVerify() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState("");
   const [actioningId, setActioningId] = useState(null);
   const { token } = useAuth();
 
   const fetchCompanies = () => {
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     api.get("api/users/companies/", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -20,7 +21,10 @@ function AdminCompanyVerify() {
         setError("");
       })
       .catch(() => setError("Failed to load companies."))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setInitialLoad(false);
+      });
   };
 
   useEffect(() => {
@@ -36,9 +40,7 @@ function AdminCompanyVerify() {
         { is_verified: isVerified },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setCompanies((prev) =>
-        prev.map((c) => (c.id === company.id ? { ...c, is_verified: isVerified } : c))
-      );
+      fetchCompanies();
     } catch {
       setError(`Failed to update verification status for ${company.company_name}.`);
     } finally {

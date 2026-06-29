@@ -31,7 +31,8 @@ function LoginPage() {
         navigate("/student/dashboard");
       }
     } catch (err) {
-      setError(err.response?.data?.detail || "Invalid email or password");
+      const data = err.response?.data;
+      setError(data?.message || data?.detail || "Invalid email or password");
       setLoading(false);
     }
   };

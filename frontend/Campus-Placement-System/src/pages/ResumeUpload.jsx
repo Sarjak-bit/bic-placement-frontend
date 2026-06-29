@@ -29,7 +29,6 @@ function ResumeUpload() {
       const res = await api.post("api/users/resume-upload/", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
       setResult(res.data);

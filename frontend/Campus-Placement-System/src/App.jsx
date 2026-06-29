@@ -3,6 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import EmailVerification from "./pages/EmailVerification";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentProfileSetup from "./pages/StudentProfileSetup";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -42,6 +43,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/verify-email/:uid/:token" element={<EmailVerification />} />
 
         <Route element={
           <ProtectedRoute allowedRole="student">
