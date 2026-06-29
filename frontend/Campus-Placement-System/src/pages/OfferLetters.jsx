@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api, { getMediaUrl } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import PageHeader from "../components/PageHeader";
 
@@ -64,7 +64,7 @@ function OfferLetters() {
               {offer.letter_file && (
                 <button
                   type="button"
-                  onClick={() => window.open(offer.letter_file, "_blank")}
+                  onClick={() => window.open(getMediaUrl(offer.letter_file), "_blank")}
                   className="btn btn-primary w-full"
                 >
                   Download Offer Letter

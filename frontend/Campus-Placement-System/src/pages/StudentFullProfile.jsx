@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
-import { useAuth } from "../contexts/AuthContext";
+import api, { getMediaUrl } from "../api/axios";import { useAuth } from "../contexts/AuthContext";
 import PageHeader from "../components/PageHeader";
 
 function StudentFullProfile() {
@@ -16,7 +15,20 @@ function StudentFullProfile() {
   const [projForm, setProjForm] = useState({ title: "", description: "", link: "" });
   const [showCertForm, setShowCertForm] = useState(false);
   const [certForm, setCertForm] = useState({ title: "", issuer: "", date: "", link: "" });
+  const [error, setError] = useState("");
+  const [savingBasic, setSavingBasic] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
   const { token } = useAuth();
+
+  const showError = (err, fallback) => {
+    const data = err.response?.data;
+    if (data) {
+      const messages = typeof data === "string" ? data : Object.values(data).flat().join(", ");
+      setError(messages || fallback);
+    } else {
+      setError(fallback);
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -34,86 +46,170 @@ function StudentFullProfile() {
     });
   };
 
+  const BASIC_FIELDS = ["bio", "location", "phone", "github_url", "linkedin_url", "portfolio_url"];
+
   const handleBasicSave = async () => {
-    await api.patch("api/users/student-profile/", basicForm, {
-      headers: { Authorization: `Bearer ${token}` },
+    // Only send the fields actually editable in this form. basicForm is
+    // seeded from the full profile fetch, so it also carries read-only/derived
+    // fields (profile_picture, skills, experiences, etc.) that must not be
+    // sent back as plain JSON — profile_picture in particular is a file field
+    // and has its own multipart upload handler below.
+    const payload = {};
+    BASIC_FIELDS.forEach((field) => {
+      payload[field] = basicForm[field] ?? "";
     });
-    setEditingBasic(false);
-    fetchProfile();
+    setError("");
+    setSavingBasic(true);
+    try {
+      await api.patch("api/users/student-profile/", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEditingBasic(false);
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to save profile changes.");
+    } finally {
+      setSavingBasic(false);
+    }
   };
 
   const handleProfilePicture = async (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const formData = new FormData();
     formData.append("profile_picture", file);
-    await api.patch("api/users/student-profile/", formData, {
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
-    });
-    fetchProfile();
+    setError("");
+    setUploadingPicture(true);
+    try {
+      await api.patch("api/users/student-profile/", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to upload profile picture.");
+    } finally {
+      setUploadingPicture(false);
+    }
   };
 
   const handleAddSkill = async () => {
-    await api.post("api/users/skills/", skillForm, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setShowSkillForm(false);
-    setSkillForm({ name: "", level: "beginner" });
-    fetchProfile();
+    if (!skillForm.name.trim()) {
+      setError("Skill name is required.");
+      return;
+    }
+    setError("");
+    try {
+      await api.post("api/users/skills/", skillForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowSkillForm(false);
+      setSkillForm({ name: "", level: "beginner" });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to add skill.");
+    }
   };
 
   const handleDeleteSkill = async (id) => {
-    await api.delete(`api/users/skills/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProfile();
+    setError("");
+    try {
+      await api.delete(`api/users/skills/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to remove skill.");
+    }
   };
 
   const handleAddExp = async () => {
-    await api.post("api/users/experiences/", expForm, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setShowExpForm(false);
-    setExpForm({ company: "", role: "", start_date: "", end_date: "", description: "" });
-    fetchProfile();
+    if (!expForm.company.trim() || !expForm.role.trim()) {
+      setError("Company and role are required.");
+      return;
+    }
+    setError("");
+    try {
+      await api.post("api/users/experiences/", expForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowExpForm(false);
+      setExpForm({ company: "", role: "", start_date: "", end_date: "", description: "" });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to add experience.");
+    }
   };
 
   const handleDeleteExp = async (id) => {
-    await api.delete(`api/users/experiences/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProfile();
+    setError("");
+    try {
+      await api.delete(`api/users/experiences/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to remove experience.");
+    }
   };
 
   const handleAddProj = async () => {
-    await api.post("api/users/projects/", projForm, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setShowProjForm(false);
-    setProjForm({ title: "", description: "", link: "" });
-    fetchProfile();
+    if (!projForm.title.trim()) {
+      setError("Project title is required.");
+      return;
+    }
+    setError("");
+    try {
+      await api.post("api/users/projects/", projForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowProjForm(false);
+      setProjForm({ title: "", description: "", link: "" });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to add project.");
+    }
   };
 
   const handleDeleteProj = async (id) => {
-    await api.delete(`api/users/projects/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProfile();
+    setError("");
+    try {
+      await api.delete(`api/users/projects/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to remove project.");
+    }
   };
 
   const handleAddCert = async () => {
-    await api.post("api/users/certifications/", certForm, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setShowCertForm(false);
-    setCertForm({ title: "", issuer: "", date: "", link: "" });
-    fetchProfile();
+    if (!certForm.title.trim()) {
+      setError("Certificate title is required.");
+      return;
+    }
+    setError("");
+    try {
+      await api.post("api/users/certifications/", certForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowCertForm(false);
+      setCertForm({ title: "", issuer: "", date: "", link: "" });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to add certification.");
+    }
   };
 
   const handleDeleteCert = async (id) => {
-    await api.delete(`api/users/certifications/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProfile();
+    setError("");
+    try {
+      await api.delete(`api/users/certifications/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProfile();
+    } catch (err) {
+      showError(err, "Failed to remove certification.");
+    }
   };
 
   const levelColor = (level) => {
@@ -146,6 +242,8 @@ function StudentFullProfile() {
         }
       />
 
+      {error && <div className="alert alert-error">{error}</div>}
+
           <div className="glass-strong overflow-hidden rounded-[28px] mb-6">
             <div className="h-32 w-full bg-gradient-to-r from-[var(--primary)] to-[var(--primary-light)]" />
             <div className="px-8 pb-6">
@@ -153,21 +251,30 @@ function StudentFullProfile() {
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-slate-300 flex items-center justify-center">
                     {profile.profile_picture ? (
-                      <img src={profile.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                     <img src={getMediaUrl(profile.profile_picture)} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">No Photo</span>
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-200 cursor-pointer">
+                  <label className={`absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-200 ${uploadingPicture ? "opacity-60" : "cursor-pointer"}`}>
                     <span className="block h-3 w-4 rounded-[2px] border-2 border-slate-500" />
-                    <input type="file" accept="image/*" className="hidden" onChange={handleProfilePicture} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleProfilePicture}
+                      disabled={uploadingPicture}
+                    />
                   </label>
+                  {uploadingPicture && (
+                    <p className="absolute -bottom-6 left-0 w-24 text-center text-[10px] font-semibold text-slate-500">Uploading...</p>
+                  )}
                 </div>
               </div>
 
               {editingBasic ? (
                 <div className="grid grid-cols-2 gap-4">
-                  {["bio", "location", "phone", "github_url", "linkedin_url", "portfolio_url"].map(field => (
+                  {BASIC_FIELDS.map(field => (
                     <div key={field}>
                       <label className="text-xs font-semibold text-gray-500 uppercase">{field.replace("_url", "").replace("_", " ")}</label>
                       <input
@@ -178,8 +285,8 @@ function StudentFullProfile() {
                     </div>
                   ))}
                   <div className="col-span-2">
-                    <button onClick={handleBasicSave} className="px-6 py-2 rounded-lg text-white text-sm font-semibold" style={{ backgroundColor: "#1a2f6e" }}>
-                      Save Changes
+                    <button onClick={handleBasicSave} disabled={savingBasic} className="px-6 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: "#1a2f6e" }}>
+                      {savingBasic ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </div>
