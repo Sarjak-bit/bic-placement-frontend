@@ -3,6 +3,8 @@ import api from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import PageHeader from "../components/PageHeader";
 
+const normalizeList = (data) => Array.isArray(data) ? data : data?.results || [];
+
 function AdminInterviews() {
   const [interviews, setInterviews] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -23,13 +25,13 @@ function AdminInterviews() {
     fetchInterviews();
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => setApplications(res.data.filter((a) => a.status === "shortlisted")));
+    }).then((res) => setApplications(normalizeList(res.data).filter((a) => a.status === "shortlisted")));
   }, [token]);
 
   const fetchInterviews = () => {
     api.get("api/interviews/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => setInterviews(res.data));
+    }).then((res) => setInterviews(normalizeList(res.data)));
   };
 
   const handleChange = (e) => {
@@ -60,6 +62,17 @@ function AdminInterviews() {
       fetchInterviews();
     } catch {
       alert("Failed to cancel interview");
+    }
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      await api.patch(`api/interviews/${id}/`, { status }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchInterviews();
+    } catch {
+      setError("Failed to update interview status");
     }
   };
 
@@ -97,7 +110,7 @@ function AdminInterviews() {
                 <option value="">Select application</option>
                 {applications.map((app) => (
                   <option key={app.id} value={app.id}>
-                    Student {app.student} — {app.job_detail?.title} at {app.job_detail?.company}
+                    {app.student_name || `Student ${app.student}`} — {app.job_detail?.title} at {app.job_detail?.company}
                   </option>
                 ))}
               </select>
@@ -165,9 +178,14 @@ function AdminInterviews() {
                   <p>Student: {interview.student}</p>
                   <p>{interview.mode === "online" ? "Online" : `${interview.location}`}</p>
                 </div>
-                <button type="button" onClick={() => handleDelete(interview.id)} className="btn btn-danger mt-3 w-full py-2 text-xs">
-                  Cancel Interview
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => handleStatusUpdate(interview.id, "completed")} className="rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-700">
+                    Mark Completed
+                  </button>
+                  <button type="button" onClick={() => handleDelete(interview.id)} className="btn btn-danger py-2 text-xs">
+                    Cancel Interview
+                  </button>
+                </div>
               </article>
             ))}
           </div>

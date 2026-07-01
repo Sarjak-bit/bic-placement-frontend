@@ -1,23 +1,47 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api, { getMediaUrl } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import PageHeader from "../components/PageHeader";
 
 function AdminApplications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
   const { token } = useAuth();
 
-  useEffect(() => {
+  const fetchApplications = () => {
+    setLoading(true);
+    setError("");
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
     }).then((res) => {
-      setApplications(res.data);
+      const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
+      setApplications(list);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      setError(err.response?.data?.message || "Could not load applications.");
+      setApplications([]);
+      setLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchApplications();
   }, [token]);
+
+  const handleStatusUpdate = async (appId, status) => {
+    setError("");
+    try {
+      await api.patch(`api/applications/${appId}/status/`, { status }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchApplications();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not update application status.");
+    }
+  };
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -96,7 +120,9 @@ function AdminApplications() {
           </select>
         </div>
 
-        {loading ? (
+        {error ? (
+          <div className="mt-6 alert alert-error">{error}</div>
+        ) : loading ? (
           <div className="mt-6 empty-state">
             <p className="text-slate-500">Loading applications...</p>
           </div>
@@ -114,8 +140,11 @@ function AdminApplications() {
                   <th className="px-3 py-3">CGPA</th>
                   <th className="px-3 py-3">Job</th>
                   <th className="px-3 py-3">Company</th>
+                  <th className="px-3 py-3">Resume</th>
+                  <th className="px-3 py-3">Cover Letter</th>
                   <th className="px-3 py-3">Applied</th>
                   <th className="px-3 py-3">Status</th>
+                  <th className="px-3 py-3">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,11 +158,33 @@ function AdminApplications() {
                     <td className="px-3 py-3 text-slate-600">{app.student_cgpa || "—"}</td>
                     <td className="px-3 py-3 text-slate-600">{app.job_detail?.title || "—"}</td>
                     <td className="px-3 py-3 text-slate-600">{app.job_detail?.company || "—"}</td>
+                    <td className="px-3 py-3">
+                      {app.student_resume ? (
+                        <a href={getMediaUrl(app.student_resume)} target="_blank" rel="noreferrer" className="font-semibold text-[var(--primary)] hover:underline">View</a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="max-w-xs px-3 py-3 text-slate-600">
+                      <p className="line-clamp-2">{app.cover_letter || "—"}</p>
+                    </td>
                     <td className="px-3 py-3 text-slate-500">
                       {app.applied_at ? new Date(app.applied_at).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-3">
                       <span className={`badge capitalize ${getStatusStyle(app.status)}`}>{app.status}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <select
+                        value={app.status}
+                        onChange={(e) => handleStatusUpdate(app.id, e.target.value)}
+                        className="min-w-32 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold"
+                      >
+                        <option value="applied">Applied</option>
+                        <option value="shortlisted">Shortlisted</option>
+                        <option value="selected">Selected</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
                     </td>
                   </tr>
                 ))}

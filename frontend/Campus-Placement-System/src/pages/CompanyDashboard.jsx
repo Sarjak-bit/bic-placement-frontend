@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api, { getMediaUrl } from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+
+const normalizeList = (data) => Array.isArray(data) ? data : data?.results || [];
 
 function CompanyDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -19,7 +21,7 @@ function CompanyDashboard() {
 
     api.get("api/jobs/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => setJobs(res.data.results));
+    }).then((res) => setJobs(normalizeList(res.data)));
 
     fetchApplications();
   }, [token, navigate]);
@@ -27,7 +29,7 @@ function CompanyDashboard() {
   const fetchApplications = () => {
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => setApplications(res.data));
+    }).then((res) => setApplications(normalizeList(res.data)));
   };
 
   const handleStatusUpdate = async (appId, newStatus) => {
@@ -59,7 +61,30 @@ function CompanyDashboard() {
           {new Date(app.applied_at).toLocaleDateString()}
         </span>
       </div>
-      <p className="mt-2 text-sm text-slate-500">Student: {app.student}</p>
+      <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+        <p><span className="font-semibold text-slate-900">Student:</span> {app.student_name || app.student}</p>
+        <p><span className="font-semibold text-slate-900">CGPA:</span> {app.student_cgpa || "—"}</p>
+        <p><span className="font-semibold text-slate-900">Faculty:</span> {app.student_faculty || "—"}</p>
+        <p><span className="font-semibold text-slate-900">Semester:</span> {app.student_semester || "—"}</p>
+      </div>
+      <div className="mt-4 rounded-2xl bg-slate-50/80 p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Cover Letter</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{app.cover_letter || "No cover letter submitted."}</p>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {app.student_resume ? (
+          <a href={getMediaUrl(app.student_resume)} target="_blank" rel="noreferrer" className="btn btn-ghost py-2 text-xs">
+            View Resume
+          </a>
+        ) : (
+          <span className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500">No resume</span>
+        )}
+        {app.status === "shortlisted" && (
+          <button type="button" onClick={() => navigate("/company/interviews")} className="btn btn-secondary py-2 text-xs">
+            Schedule Interview
+          </button>
+        )}
+      </div>
       {showActions && (
         <div className="mt-3 flex gap-2">
           <button type="button" onClick={() => handleStatusUpdate(app.id, "shortlisted")} className="btn btn-secondary flex-1 py-2 text-xs">

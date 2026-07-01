@@ -12,7 +12,10 @@ function MyApplications() {
   useEffect(() => {
     api.get("api/applications/", {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => setApplications(res.data));
+    }).then((res) => {
+      const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
+      setApplications(list);
+    });
   }, [token]);
 
   const getStatusStyle = (status) => {
@@ -57,7 +60,7 @@ function MyApplications() {
                 <span className="rounded-xl bg-slate-100 px-3 py-1.5">Deadline: {app.job_detail?.deadline}</span>
               </div>
               <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
-                Applied on: {new Date(app.applied_at).toLocaleDateString()}
+                Applied on: {app.applied_at ? new Date(app.applied_at).toLocaleDateString() : "—"}
               </div>
             </article>
           ))}

@@ -32,6 +32,10 @@ function AdminCompanyVerify() {
   }, [token]);
 
   const handleSetVerified = async (company, isVerified) => {
+    if (!company.id) {
+      setError(`${company.company_name} has not completed the company profile yet.`);
+      return;
+    }
     setActioningId(company.id);
     setError("");
     try {
@@ -59,7 +63,7 @@ function AdminCompanyVerify() {
           <p className="text-sm text-slate-500">{company.email}</p>
         </div>
         <span className={`badge ${company.is_verified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-          {company.is_verified ? "Verified" : "Pending"}
+          {company.is_verified ? "Verified" : company.profile_complete === false ? "Profile incomplete" : "Pending"}
         </span>
       </div>
 
@@ -79,7 +83,11 @@ function AdminCompanyVerify() {
       )}
 
       <div className="mt-4 flex gap-2">
-        {company.is_verified ? (
+        {company.profile_complete === false ? (
+          <button type="button" disabled className="btn btn-ghost flex-1 py-2 text-xs">
+            Awaiting Profile Setup
+          </button>
+        ) : company.is_verified ? (
           <button
             type="button"
             onClick={() => handleSetVerified(company, false)}
@@ -130,7 +138,7 @@ function AdminCompanyVerify() {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {pending.map((c) => (
-                  <CompanyCard key={c.id} company={c} />
+                  <CompanyCard key={c.id || `company-user-${c.user_id}`} company={c} />
                 ))}
               </div>
             )}
@@ -145,7 +153,7 @@ function AdminCompanyVerify() {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {verified.map((c) => (
-                  <CompanyCard key={c.id} company={c} />
+                  <CompanyCard key={c.id || `company-user-${c.user_id}`} company={c} />
                 ))}
               </div>
             )}
