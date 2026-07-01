@@ -9,6 +9,7 @@ function RegisterPage() {
     email: "",
     password: "",
     phone: "",
+    role: "student",
   });
   const [error, setError] = useState("");
   const [registered, setRegistered] = useState(false);
@@ -16,10 +17,6 @@ function RegisterPage() {
   const navigate = useNavigate();
 
   const STUDENT_DOMAIN = "@student.bic.edu.np";
-
-  const detectRole = (email) => {
-    return email.toLowerCase().endsWith(STUDENT_DOMAIN) ? "student" : "company";
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,17 +28,14 @@ function RegisterPage() {
     setError("");
     setLoading(true);
 
-    const role = detectRole(formData.email);
+    if (formData.role === "student" && !formData.email.toLowerCase().endsWith(STUDENT_DOMAIN)) {
+      setError(`Student registration requires a ${STUDENT_DOMAIN} email address.`);
+      setLoading(false);
+      return;
+    }
 
-    // TEMPORARY WORKAROUND: kept until confirmed the backend no longer
-    // requires `username` on register. Remove this block once confirmed
-    // unnecessary.
-    const emailPrefix = formData.email.split("@")[0] || "user";
-    const randomSuffix = Math.random().toString(36).slice(2, 8);
     const payload = {
       ...formData,
-      role,
-      username: `${emailPrefix}_${randomSuffix}`,
     };
 
     try {
@@ -107,6 +101,30 @@ function RegisterPage() {
           ) : (
             <form onSubmit={handleRegister} className="space-y-5">
               <div>
+                <label className="form-label">Register As</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: "student", label: "Student", note: "Use your BIC student email" },
+                    { value: "company", label: "Company", note: "Use any valid company email" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, role: option.value })}
+                      className={`rounded-2xl border px-4 py-3 text-left transition ${
+                        formData.role === option.value
+                          ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                      }`}
+                    >
+                      <span className="block text-sm font-bold">{option.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">{option.note}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="form-label">Full Name</label>
                 <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter your full name" />
               </div>
@@ -116,9 +134,9 @@ function RegisterPage() {
                   <label className="form-label">Email</label>
                   <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Enter email" required />
                   <p className="mt-1 text-xs text-slate-400">
-                    {formData.email
-                      ? `Will register as ${detectRole(formData.email) === "student" ? "Student" : "Company"}.`
-                      : `Use a ${STUDENT_DOMAIN} email to register as a student. Any other email registers as a company.`}
+                    {formData.role === "student"
+                      ? `Students must use a ${STUDENT_DOMAIN} email.`
+                      : "Company accounts can use any valid email address."}
                   </p>
                 </div>
                 <div>
